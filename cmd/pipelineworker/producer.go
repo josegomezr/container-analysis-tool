@@ -22,23 +22,24 @@ func main() {
 		return
 	}
 
-  srv := asynq.NewServer(
+  client := asynq.NewClient(
     asynq.RedisClientOpt{
     	Addr: opts.Addr,
     	Username: opts.Username,
     	Password: opts.Password,
     	DB: opts.DB,
     },
-    asynq.Config{
-        Concurrency: 10,
-    },
   )
+  defer client.Close()
 
-  // mux maps a type to a handler
-  mux := asynq.NewServeMux()
-  mux.HandleFunc(tasks.TypeProcessImage, tasks.HandleProcessImageTask)
+  task, err := tasks.NewProcessImageTask("registry.suse.com/bci/bci-busybox")
 
-  if err := srv.Run(mux); err != nil {
-      log.Fatalf("could not run server: %v", err)
+  if err != nil {
+      log.Fatalf("could not create task: %v", err)
   }
+  info, err := client.Enqueue(task)
+  if err != nil {
+      log.Fatalf("could not enqueue task: %v", err)
+  }
+  log.Printf("enqueued task: id=%s queue=%s", info.ID, info.Queue)
 }

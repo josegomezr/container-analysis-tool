@@ -9,6 +9,11 @@ import (
 	"sync"
 )
 
+const (
+  TypeEmailDelivery   = "email:deliver"
+  TypeImageResize     = "image:resize"
+)
+
 func doScan(ctx context.Context, inputFile string) {
 	scan, err := scanner.ScanImage(ctx, inputFile)
 
