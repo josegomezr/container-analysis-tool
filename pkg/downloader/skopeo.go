@@ -26,8 +26,10 @@ type DownloadResult struct {
 }
 
 func Download(ctx context.Context, opts *Opts) ([]DownloadResult, error) {
-	sysctx := &types.SystemContext{}
-
+	auth := getDockerAuthConfig()
+	sysctx := &types.SystemContext{
+		DockerAuthConfig: &auth,
+	}
 	srcRef, err := alltransports.ParseImageName(opts.Source)
 	if err != nil {
 		fmt.Printf("err: %v \n", err)
@@ -94,11 +96,17 @@ func DownloadArch(ctx context.Context, srcRef types.ImageReference, opts *Opts, 
 		fmt.Printf("err: %v \n", err)
 		return DownloadResult{}, err
 	}
+
 	fmt.Println(transports.ImageName(destRef))
+
+	auth := getDockerAuthConfig()
 
 	manifestBytes, err := copy.Image(ctx, sig, destRef, srcRef, &copy.Options{
 		RemoveSignatures: true,
-		SourceCtx:        &types.SystemContext{ArchitectureChoice: arch},
+		SourceCtx:        &types.SystemContext{
+			ArchitectureChoice: arch,
+			DockerAuthConfig: &auth,
+		},
 	})
 
 	if err != nil {
